@@ -41,6 +41,7 @@ class TextRecognizer(object):
         self.character_type = args.rec_char_type
         self.rec_batch_num = args.rec_batch_num
         self.rec_algorithm = args.rec_algorithm
+        self.max_text_length = args.max_text_length
         postprocess_params = {
             'name': 'CTCLabelDecode',
             "character_type": args.rec_char_type,
@@ -186,8 +187,9 @@ class TextRecognizer(object):
                     norm_img = norm_img[np.newaxis, :]
                     norm_img_batch.append(norm_img)
                 else:
-                    norm_img = self.process_image_srn(
-                        img_list[indices[ino]], self.rec_image_shape, 8, 25)
+                    norm_img = self.process_image_srn(img_list[indices[ino]],
+                                                      self.rec_image_shape, 8,
+                                                      self.max_text_length)
                     encoder_word_pos_list = []
                     gsrm_word_pos_list = []
                     gsrm_slf_attn_bias1_list = []
@@ -237,7 +239,7 @@ class TextRecognizer(object):
                     output = output_tensor.copy_to_cpu()
                     outputs.append(output)
                 preds = outputs[0]
-
+            self.predictor.try_shrink_memory()
             rec_result = self.postprocess_op(preds)
             for rno in range(len(rec_result)):
                 rec_res[indices[beg_img_no + rno]] = rec_result[rno]
